@@ -101,10 +101,6 @@ def plot_wireframe(X, Y, Z):
     plt.show()
 
 
-if len(sys.argv) < 2:
-    sys.exit("usage: {0} wav_file".format(sys.argv[0]))
-
-
 def plot_surface(X, Y, Z):
 
     fig = plt.figure()
@@ -127,6 +123,11 @@ def plot_multiseries(data):
     pass
 
 
+
+if len(sys.argv) < 2:
+    sys.exit("usage: {0} wav_file".format(sys.argv[0]))
+
+
 fs, data = read_wav(sys.argv[1])  # load the data
 
 print "data length is {0} samples".format(len(data))
@@ -134,7 +135,7 @@ print "data length is {0} samples".format(len(data))
 # TODO(PMM) assuming 16-bit data (down-shifted from 24-bit recorded)
 signal_norm = normalise_wav_data(data.T)
 
-# plot_series(signal_norm)
+plot_series(signal_norm)
 
 plot_series(generate_rms(signal_norm, 1000))  # samples quite granular
 
@@ -158,11 +159,12 @@ freq_selection = select_real(freq_hist, 4000)
 
 # now build a surface data set
 freq_array, time_array, amp_array = create_surface_data(freq_selection)
+plot_series(amp_array[0])
 
 amp_array_log = [np.log10(abs(datum)) for datum in amp_array]
 
 #for freq_slice in amp_array_log: plot_series(freq_slice)
-# plot_series(amp_array_log[1])
+plot_series(amp_array_log[1])
 
 # TODO(PMM) problem with wireplots is that the shape is "peaky",
 # so it's only by coincidence that any lines will go straight down the hill
