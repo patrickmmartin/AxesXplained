@@ -1,2 +1,6 @@
-# AxesXplained
-repo for the Axes Xplained publication
+AxesXplained
+============
+
+repo for the Axes Xplained publication https://medium.com/axes-xplained
+
+
