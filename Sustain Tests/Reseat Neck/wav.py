@@ -25,6 +25,12 @@ def normalise_wav_data(signal):
     return [(ele / 2**15.) for ele in signal]
 
 
+def generate_rms(data, window_size):
+    data2 = np.power(data, 2)
+    window = np.ones(window_size) / float(window_size)
+    return np.sqrt(np.convolve(data2, window, 'valid'))
+
+
 def splice_data(data, chunk_size):
     """ splices the passed data into an array of smaller chunks
 
@@ -32,7 +38,7 @@ def splice_data(data, chunk_size):
     chunk_size: sample size that must be in the chunk
     """
     length = len(data)
-    return [data[i:i + chunk_size] for i in range(0, len(data), chunk_size) if length - i > chunk_size ]
+    return [data[i:i + chunk_size] for i in range(0, len(data), chunk_size) if length - i > chunk_size]
 
 
 def fft_data(data):
@@ -45,12 +51,12 @@ def fft_data(data):
 
 def select_real(data, length=0):
     """ returns the useful range of the FFT
-    
+
     data: array of arrays
     """
     # by default you only need half of the fft list (real signal symmetry)
-    size = length if length else len(data[0]) / 2 -1  
-    return [abs(datum[1:size]) for datum in data] 
+    size = length if length else len(data[0]) / 2 - 1
+    return [abs(datum[1:size]) for datum in data]
 
 
 def plot_series(data):
@@ -69,13 +75,13 @@ def create_surface_data(freq_slices):
     # these array will all match in dimensions (i.e. no gaps)
 
     freq_points = range(0, len(freq_slices[0]))
-    time_points=range(0, len(freq_slices))
+    time_points = range(0, len(freq_slices))
 
-    freq_array, time_array=np.meshgrid(freq_points, time_points)
-    amp_array=freq_slices
+    freq_array, time_array = np.meshgrid(freq_points, time_points)
+    amp_array = freq_slices
 
     # print "freq:\n{0}\ntime:\n{0}\namp:\n{2}".format(freq_array, time_array, amp_array)
-    #print "freq:\n{0}, {1}\ntime:\n{2}, {3}\namp:\n{4}, {5}".format(len(freq_array), len(freq_array[0]), len(time_array), len(time_array[0]), len(amp_array), len(amp_array[0]))
+    # print "freq:\n{0}, {1}\ntime:\n{2}, {3}\namp:\n{4}, {5}".format(len(freq_array), len(freq_array[0]), len(time_array), len(time_array[0]), len(amp_array), len(amp_array[0]))
 
     return freq_array, time_array, amp_array
 
@@ -86,8 +92,8 @@ def plot_wireframe(X, Y, Z):
     """
     from mpl_toolkits.mplot3d import axes3d
 
-    fig=plt.figure()
-    ax=fig.add_subplot(111, projection='3d')
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
 
     # Plot a basic wireframe.
     ax.plot_wireframe(X, Y, Z, rstride=1, cstride=0)
@@ -98,6 +104,7 @@ def plot_wireframe(X, Y, Z):
 if len(sys.argv) < 2:
     sys.exit("usage: {0} wav_file".format(sys.argv[0]))
 
+
 def plot_surface(X, Y, Z):
 
     fig = plt.figure()
@@ -105,8 +112,7 @@ def plot_surface(X, Y, Z):
 
     # Plot the surface.
     surf = ax.plot_surface(X, Y, Z, cmap=cm.coolwarm,
-                       linewidth=0, antialiased=False)
-
+                           linewidth=0, antialiased=False)
 
     # Add a color bar which maps values to colors.
     fig.colorbar(surf, shrink=0.5, aspect=5)
@@ -120,43 +126,46 @@ def plot_multiseries(data):
     """
     pass
 
-    
 
-    
-fs, data=read_wav(sys.argv[1])  # load the data
+fs, data = read_wav(sys.argv[1])  # load the data
 
 print "data length is {0} samples".format(len(data))
 
 # TODO(PMM) assuming 16-bit data (down-shifted from 24-bit recorded)
-signal_norm=normalise_wav_data(data.T)
+signal_norm = normalise_wav_data(data.T)
 
-plot_series(signal_norm)
+# plot_series(signal_norm)
 
+plot_series(generate_rms(signal_norm, 1000))  # samples quite granular
+
+# samples quite granular
+plot_series(np.log10(generate_rms(signal_norm, 2000)))
 
 signal_seq = splice_data(signal_norm, 65536)
 
-#plot_series(signal_seq[0])
-#plot_series(np.log10(np.abs(signal_seq[0])))
+# plot_series(signal_seq[0])
+# plot_series(np.log10(np.abs(signal_seq[0])))
 
 # calculate fourier transform (complex numbers list)
-freq_hist=fft_data(signal_seq)
+freq_hist = fft_data(signal_seq)
 
 # select the relevant portion
-freq_selection=select_real(freq_hist, 4000) #TODO(PMM) magic constant to truncate to reasonable frequencies
+# TODO(PMM) magic constant to truncate to reasonable frequencies
+freq_selection = select_real(freq_hist, 4000)
 
 #for freq_slice in freq_selection: plot_series(freq_slice)
-#plot_series(freq_selection[1])
+# plot_series(freq_selection[1])
 
 # now build a surface data set
-freq_array, time_array, amp_array=create_surface_data(freq_selection)
+freq_array, time_array, amp_array = create_surface_data(freq_selection)
 
 amp_array_log = [np.log10(abs(datum)) for datum in amp_array]
 
 #for freq_slice in amp_array_log: plot_series(freq_slice)
-#plot_series(amp_array_log[1])
+# plot_series(amp_array_log[1])
 
 # TODO(PMM) problem with wireplots is that the shape is "peaky",
-# so it's only by coincidence that any lines will go straight down the hill  
+# so it's only by coincidence that any lines will go straight down the hill
 #plot_wireframe(freq_array, time_array, amp_array)
 
 plot_wireframe(freq_array, time_array, amp_array_log)
