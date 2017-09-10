@@ -133,7 +133,7 @@ print "data length is {0} samples".format(len(data))
 # TODO(PMM) assuming 16-bit data (down-shifted from 24-bit recorded)
 signal_norm=normalise_wav_data(data.T[:POINTS])
 
-signal_seq = splice_data(signal_norm, 16)
+signal_seq = splice_data(signal_norm, 8)
 
 # TODO(PMM) AACK to the last few rubbish bits of the files
 # signal_seq = signal_seq[0:(len(signal_seq)/2)]
@@ -153,7 +153,7 @@ freq_selection=select_real(freq_hist, 4000)
 # now build a surface data set
 freq_array, time_array, amp_array=create_surface_data(freq_selection)
 
-amp_array_log = log_fft(amp_array)
+amp_array_log = [np.log10(abs(datum)) for datum in amp_array]
 
 #for freq_slice in amp_array_log: plot_series(freq_slice)
 #plot_series(amp_array_log[1])
@@ -164,4 +164,4 @@ amp_array_log = log_fft(amp_array)
 
 plot_wireframe(freq_array, time_array, amp_array_log)
 
-plot_surface(freq_array, time_array, amp_array_log)
+#plot_surface(freq_array, time_array, amp_array_log)
