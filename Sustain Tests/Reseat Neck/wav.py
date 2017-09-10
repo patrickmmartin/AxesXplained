@@ -135,8 +135,8 @@ signal_norm=normalise_wav_data(data.T[:POINTS])
 
 signal_seq = splice_data(signal_norm, 16)
 
-# TOOD(PMM) AACK to the last few rubbish bits of the files
-signal_seq = signal_seq[0:(len(signal_seq)/2)]
+# TODO(PMM) AACK to the last few rubbish bits of the files
+# signal_seq = signal_seq[0:(len(signal_seq)/2)]
 
 #plot_series(signal_seq[0])
 #plot_series(np.log10(np.abs(signal_seq[0])))
