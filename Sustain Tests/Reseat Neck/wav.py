@@ -8,9 +8,6 @@ from matplotlib import cm
 from matplotlib.ticker import LinearLocator, FormatStrFormatter
 
 
-POINTS = 2**20
-
-
 def read_wav(filename):
     """reads the wav file passed and returns (filestream, data)
 
@@ -28,14 +25,14 @@ def normalise_wav_data(signal):
     return [(ele / 2**15.) for ele in signal]
 
 
-def splice_data(data, chunks=16):
+def splice_data(data, chunk_size):
     """ splices the passed data into an array of smaller chunks
 
     data  : array of values
-    chunks: no. of chunks to divide the data into
+    chunk_size: sample size that must be in the chunk
     """
-    chunk_size = len(data) / chunks
-    return [data[i:i + chunk_size] for i in range(0, len(data), chunk_size) ]
+    length = len(data)
+    return [data[i:i + chunk_size] for i in range(0, len(data), chunk_size) if length - i > chunk_size ]
 
 
 def fft_data(data):
@@ -131,12 +128,12 @@ fs, data=read_wav(sys.argv[1])  # load the data
 print "data length is {0} samples".format(len(data))
 
 # TODO(PMM) assuming 16-bit data (down-shifted from 24-bit recorded)
-signal_norm=normalise_wav_data(data.T[:POINTS])
+signal_norm=normalise_wav_data(data.T)
 
-signal_seq = splice_data(signal_norm, 8)
+plot_series(signal_norm)
 
-# TODO(PMM) AACK to the last few rubbish bits of the files
-# signal_seq = signal_seq[0:(len(signal_seq)/2)]
+
+signal_seq = splice_data(signal_norm, 65536)
 
 #plot_series(signal_seq[0])
 #plot_series(np.log10(np.abs(signal_seq[0])))
@@ -145,7 +142,7 @@ signal_seq = splice_data(signal_norm, 8)
 freq_hist=fft_data(signal_seq)
 
 # select the relevant portion
-freq_selection=select_real(freq_hist, 4000)
+freq_selection=select_real(freq_hist, 4000) #TODO(PMM) magic constant to truncate to reasonable frequencies
 
 #for freq_slice in freq_selection: plot_series(freq_slice)
 #plot_series(freq_selection[1])
@@ -159,7 +156,7 @@ amp_array_log = [np.log10(abs(datum)) for datum in amp_array]
 #plot_series(amp_array_log[1])
 
 # TODO(PMM) problem with wireplots is that the shape is "peaky",
-# so it's only by coincidence that any lines will go right down the hill  
+# so it's only by coincidence that any lines will go straight down the hill  
 #plot_wireframe(freq_array, time_array, amp_array)
 
 plot_wireframe(freq_array, time_array, amp_array_log)
