@@ -59,11 +59,12 @@ def select_real(data, length=0):
     return [abs(datum[1:size]) for datum in data]
 
 
-def plot_series(data):
+def plot_series(data, props):
     """ plots a linear series
 
     """
-    plt.plot(data, 'r')  # TODO(PMM) meaning of 'r'
+    plt.plot(data, 'b')
+    plt.title(props['title'])
     plt.show()
 
 
@@ -86,15 +87,18 @@ def create_surface_data(freq_slices):
     return freq_array, time_array, amp_array
 
 
-def plot_wireframe(X, Y, Z):
+def plot_wireframe(X, Y, Z, props):
     """ plots a wireframe from the definition in the data
 
     """
     from mpl_toolkits.mplot3d import axes3d
 
     fig = plt.figure()
+
     ax = fig.add_subplot(111, projection='3d')
 
+    ax.text2D(0.05, 0.95, props['title'], transform=ax.transAxes)
+   
     # Plot a basic wireframe.
     ax.plot_wireframe(X, Y, Z, rstride=1, cstride=0)
 
@@ -135,12 +139,14 @@ print "data length is {0} samples".format(len(data))
 # TODO(PMM) assuming 16-bit data (down-shifted from 24-bit recorded)
 signal_norm = normalise_wav_data(data.T)
 
-plot_series(signal_norm)
+plot_series(signal_norm, {'title': 'recording'})
 
-plot_series(generate_rms(signal_norm, 1000))  # samples quite granular
+rms_signal=generate_rms(signal_norm, 1000)
+
+plot_series(rms_signal, {'title': 'RMS'})  # samples quite granular
 
 # samples quite granular
-plot_series(np.log10(generate_rms(signal_norm, 2000)))
+plot_series(np.log10(rms_signal), {'title': 'log RMS'})
 
 signal_seq = splice_data(signal_norm, 65536)
 
@@ -154,22 +160,22 @@ freq_hist = fft_data(signal_seq)
 # TODO(PMM) magic constant to truncate to reasonable frequencies
 freq_selection = select_real(freq_hist, 4000)
 
-#for freq_slice in freq_selection: plot_series(freq_slice)
+#for freq_slice in freq_selection: plot_series(freq_slice,  {'title': ''})
 # plot_series(freq_selection[1])
 
 # now build a surface data set
 freq_array, time_array, amp_array = create_surface_data(freq_selection)
-plot_series(amp_array[0])
+plot_series(amp_array[0],  {'title': 'frequency amplitudes'})
 
 amp_array_log = [np.log10(abs(datum)) for datum in amp_array]
 
 #for freq_slice in amp_array_log: plot_series(freq_slice)
-plot_series(amp_array_log[1])
+plot_series(amp_array_log[1], {'title': 'log frequency amplitudes'})
 
 # TODO(PMM) problem with wireplots is that the shape is "peaky",
 # so it's only by coincidence that any lines will go straight down the hill
-#plot_wireframe(freq_array, time_array, amp_array)
+#plot_wireframe(freq_array, time_array, amp_array, {'title': 'frequency amplitudes'})
 
-plot_wireframe(freq_array, time_array, amp_array_log)
+plot_wireframe(freq_array, time_array, amp_array_log, {'title': 'frequency amplitudes'})
 
 #plot_surface(freq_array, time_array, amp_array_log)
