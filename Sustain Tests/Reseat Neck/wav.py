@@ -49,6 +49,14 @@ def fft_data(data):
     return [fft(datum) for datum in data]
 
 
+def freq_bins(sample_freq, length):
+    """ calculates the frequency bins array
+
+        returns the frequency bins
+    """
+    return [i * (1. * sample_freq / length) for i in range(0, length)]
+
+
 def select_real(data, length=0):
     """ returns the useful range of the FFT
 
@@ -59,11 +67,12 @@ def select_real(data, length=0):
     return [abs(datum[1:size]) for datum in data]
 
 
-def plot_series(data, props):
+def plot_series(x, y, props):
     """ plots a linear series
 
     """
-    plt.plot(data, 'b')
+
+    plt.plot(x, y, 'b')
     plt.title(props['title'])
     plt.show()
 
@@ -98,7 +107,7 @@ def plot_wireframe(X, Y, Z, props):
     ax = fig.add_subplot(111, projection='3d')
 
     ax.text2D(0.05, 0.95, props['title'], transform=ax.transAxes)
-   
+
     # Plot a basic wireframe.
     ax.plot_wireframe(X, Y, Z, rstride=1, cstride=0)
 
@@ -127,55 +136,60 @@ def plot_multiseries(data):
     pass
 
 
-
 if len(sys.argv) < 2:
     sys.exit("usage: {0} wav_file".format(sys.argv[0]))
 
 
 fs, data = read_wav(sys.argv[1])  # load the data
 
+length = len(data)
+time_seq = [1. * i / fs for i in range(0, length)]
+
 print "data length is {0} samples".format(len(data))
 
 # TODO(PMM) assuming 16-bit data (down-shifted from 24-bit recorded)
 signal_norm = normalise_wav_data(data.T)
 
-plot_series(signal_norm, {'title': 'recording'})
+plot_series(time_seq, signal_norm, {'title': 'recording'})
 
-rms_signal=generate_rms(signal_norm, 1000)
+RMS_BIN = 1000
 
-plot_series(rms_signal, {'title': 'RMS'})  # samples quite granular
+rms_signal = generate_rms(signal_norm, 1000)
+
+rms_seq = [1. * i / fs for i in range(0, len(rms_signal))]
+
+plot_series(rms_seq, rms_signal, {'title': 'RMS'})  # samples quite granular
 
 # samples quite granular
-plot_series(np.log10(rms_signal), {'title': 'log RMS'})
+plot_series(rms_seq, np.log10(rms_signal), {'title': 'log RMS'})
 
 signal_seq = splice_data(signal_norm, 65536)
 
-# plot_series(signal_seq[0])
-# plot_series(np.log10(np.abs(signal_seq[0])))
+freq_seq = freq_bins(fs, len(signal_seq[0]))
 
 # calculate fourier transform (complex numbers list)
 freq_hist = fft_data(signal_seq)
 
 # select the relevant portion
-# TODO(PMM) magic constant to truncate to reasonable frequencies
-freq_selection = select_real(freq_hist, 4000)
-
-#for freq_slice in freq_selection: plot_series(freq_slice,  {'title': ''})
-# plot_series(freq_selection[1])
+FFT_WINDOW = 4000
+freq_selection = select_real(freq_hist, FFT_WINDOW)
 
 # now build a surface data set
 freq_array, time_array, amp_array = create_surface_data(freq_selection)
-plot_series(amp_array[0],  {'title': 'frequency amplitudes'})
+plot_series(freq_seq[1:FFT_WINDOW], amp_array[0],
+            {'title': 'frequency amplitudes'})
 
 amp_array_log = [np.log10(abs(datum)) for datum in amp_array]
 
 #for freq_slice in amp_array_log: plot_series(freq_slice)
-plot_series(amp_array_log[1], {'title': 'log frequency amplitudes'})
+plot_series(freq_seq[1:FFT_WINDOW], amp_array_log[1],
+            {'title': 'log frequency amplitudes'})
 
 # TODO(PMM) problem with wireplots is that the shape is "peaky",
 # so it's only by coincidence that any lines will go straight down the hill
 #plot_wireframe(freq_array, time_array, amp_array, {'title': 'frequency amplitudes'})
 
-plot_wireframe(freq_array, time_array, amp_array_log, {'title': 'frequency amplitudes'})
+plot_wireframe(freq_array, time_array, amp_array_log,
+               {'title': 'frequency amplitudes'})
 
 #plot_surface(freq_array, time_array, amp_array_log)
