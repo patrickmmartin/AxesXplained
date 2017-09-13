@@ -74,6 +74,11 @@ def plot_series(x, y, props):
 
     plt.plot(x, y, 'b')
     plt.title(props['title'])
+    if (props.get('y_limit', None)):
+
+        y_lim = props['y_limit']
+        print y_lim
+        plt.ylim(y_lim[0], y_lim[1])
     plt.show()
 
 
@@ -150,7 +155,8 @@ print "data length is {0} samples for {1} s at {2} Hz".format(len(data), len(dat
 signal_norm = normalise_wav_data(data.T)
 
 # plot simple normalised waveform
-plot_series(time_seq, signal_norm, {'title': 'recording'})
+plot_series(time_seq, signal_norm, {
+            'title': 'recording', 'y_limit': [-1.1, 1.1]})
 
 
 RMS_BIN = 1000
