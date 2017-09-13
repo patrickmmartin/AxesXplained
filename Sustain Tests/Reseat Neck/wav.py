@@ -77,7 +77,6 @@ def plot_series(x, y, props):
     if (props.get('y_limit', None)):
 
         y_lim = props['y_limit']
-        print y_lim
         plt.ylim(y_lim[0], y_lim[1])
     plt.show()
 
@@ -141,11 +140,54 @@ def plot_multiseries(data):
     pass
 
 
+def usage():
+    sys.exit(
+        "usage: {0} wav.py -signal -rms -logrms -fft -logfft -wireframe wav_file".format(sys.argv[0]))
+
+
+import sys
+import getopt
+
 if len(sys.argv) < 2:
-    sys.exit("usage: {0} wav_file".format(sys.argv[0]))
+    usage()
+
+try:
+    opts, args = getopt.getopt(sys.argv, "hsrRfFwn", [
+                               "signal", "RMS", "logRMS", "fft", "logfft", "wireframe", "noninteractive"])
+
+    options = {'signal': False, 'RMS': False, 'logRMS': False,
+               'fft': False, 'logfft': False, 'wireframe': False,
+               'noninteractive': False}
+
+except getopt.GetoptError:
+    print 'test.py -i <inputfile> -o <outputfile>'
+    sys.exit(2)
+
+print opts
+for opt, arg in opts:
+    print opt, args
+    if opt == '-h':
+        usage()
+        sys.exit()
+    elif opt in ("-s", "--signal"):
+        options['signal'] = True
+    elif opt in ("-r", "--RMS"):
+        options['RMS'] = True
+    elif opt in ("-R", "--logRM"):
+        options['logRMS'] = True
+    elif opt in ("-f", "--fft"):
+        options['fft'] = True
+    elif opt in ("-F", "--logFFT"):
+        options['logfft'] = True
+    elif opt in ("-w", "--wireframe"):
+        options['wireframe'] = True
+    elif opt in ("-n", "--noninteractive"):
+        options['noninteractive'] = True
+
+print options
 
 # load the data and set up the correct time axis values
-fs, data = read_wav(sys.argv[1])
+fs, data = read_wav(args[2])
 length = len(data)
 time_seq = [1. * i / fs for i in range(0, length)]
 
@@ -155,8 +197,9 @@ print "data length is {0} samples for {1} s at {2} Hz".format(len(data), len(dat
 signal_norm = normalise_wav_data(data.T)
 
 # plot simple normalised waveform
-plot_series(time_seq, signal_norm, {
-            'title': 'recording', 'y_limit': [-1.1, 1.1]})
+if options['signal']:
+    plot_series(time_seq, signal_norm, {
+                'title': 'recording', 'y_limit': [-1.1, 1.1]})
 
 
 RMS_BIN = 1000
@@ -167,10 +210,13 @@ rms_signal = generate_rms(signal_norm, 1000)
 rms_seq = [1. * (i + 0.5) / fs for i in range(0, len(rms_signal))]
 
 # plot RMS
-plot_series(rms_seq, rms_signal, {'title': 'RMS'})  # samples quite granular
+if options['RMS']:
+    # samples quite granular
+    plot_series(rms_seq, rms_signal, {'title': 'RMS'})
 
 # plot log RMS
-plot_series(rms_seq, np.log10(rms_signal), {'title': 'log RMS'})
+if options['logRMS']:
+    plot_series(rms_seq, np.log10(rms_signal), {'title': 'log RMS'})
 
 SPLICE_WINDOW = 65536
 
@@ -189,20 +235,23 @@ freq_selection = select_real(freq_hist, FREQ_WINDOW)
 freq_array, time_array, amp_array = create_surface_data(freq_selection)
 
 # freq_seq is SLICE_WINDOW, freq_selection is FFT_WINDOW
-plot_series(freq_seq[1:FREQ_WINDOW], amp_array[0],
-            {'title': 'frequency amplitudes'})
+if options['fft']:
+    plot_series(freq_seq[1:FREQ_WINDOW], amp_array[0],
+                {'title': 'frequency amplitudes'})
 
 amp_array_log = [np.log10(abs(datum)) for datum in amp_array]
 
 #for freq_slice in amp_array_log: plot_series(freq_slice)
-plot_series(freq_seq[1:FREQ_WINDOW], amp_array_log[1],
-            {'title': 'log frequency amplitudes'})
+if options['logfft']:
+    plot_series(freq_seq[1:FREQ_WINDOW], amp_array_log[1],
+                {'title': 'log frequency amplitudes'})
 
 # TODO(PMM) problem with wireplots is that the shape is "peaky",
 # so it's only by coincidence that any lines will go straight down the hill
 #plot_wireframe(freq_array, time_array, amp_array, {'title': 'frequency amplitudes'})
 
-plot_wireframe(freq_seq[1:FREQ_WINDOW], time_array, amp_array_log,
-               {'title': 'frequency amplitudes'})
+if options['wireframe']:
+    plot_wireframe(freq_seq[1:FREQ_WINDOW], time_array, amp_array_log,
+                   {'title': 'frequency amplitudes'})
 
 #plot_surface(freq_array, time_array, amp_array_log)
