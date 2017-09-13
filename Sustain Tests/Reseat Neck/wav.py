@@ -1,4 +1,5 @@
 import sys
+import os.path
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.fftpack import fft
@@ -73,12 +74,17 @@ def plot_series(x, y, props):
     """
 
     plt.plot(x, y, 'b')
-    plt.title(props['title'])
+    title = props['title']
+    plt.title(title)
     if (props.get('y_limit', None)):
 
         y_lim = props['y_limit']
         plt.ylim(y_lim[0], y_lim[1])
-    plt.show()
+    if not options['noninteractive']:
+        plt.show()
+    else:
+        base = os.path.basename(filename)
+        plt.savefig("{0}-{1}.png".format(base, title), bbox_inches='tight')
 
 
 def create_surface_data(freq_slices):
@@ -106,6 +112,7 @@ def plot_wireframe(X, Y, Z, props):
     """
     from mpl_toolkits.mplot3d import axes3d
 
+    title = props['title']
     fig = plt.figure()
 
     ax = fig.add_subplot(111, projection='3d')
@@ -115,7 +122,13 @@ def plot_wireframe(X, Y, Z, props):
     # Plot a basic wireframe.
     ax.plot_wireframe(X, Y, Z, rstride=1, cstride=0)
 
-    plt.show()
+    ax.view_init(elev=65., azim=-90)
+
+    if not options['noninteractive']:
+        plt.show()
+    else:
+        base = os.path.basename(filename)
+        plt.savefig("{0}-{1}.png".format(base, title), bbox_inches='tight')
 
 
 def plot_surface(X, Y, Z):
@@ -128,7 +141,7 @@ def plot_surface(X, Y, Z):
                            linewidth=0, antialiased=False)
 
     # Add a color bar which maps values to colors.
-    fig.colorbar(surf, shrink=0.5, aspect=5)
+    fig.colorbar(surf, shrink=1, aspect=5)
 
     plt.show()
 
@@ -176,6 +189,8 @@ except getopt.GetoptError:
 if len(args) != 1:
     usage()
 
+filename = args[0]
+
 for opt, arg in opts:
     if opt == '-h':
         usage()
@@ -197,7 +212,7 @@ for opt, arg in opts:
 
 
 # load the data and set up the correct time axis values
-fs, data = read_wav(args[0])
+fs, data = read_wav(filename)
 length = len(data)
 time_seq = [1. * i / fs for i in range(0, length)]
 
