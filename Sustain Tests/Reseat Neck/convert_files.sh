@@ -1,1 +1,1 @@
-for f in *.wav; do python wav.py -nsrRfFw  "$f" ; done;
+for f in *.wav; do python wav.py -n$1  "$f" ; done;

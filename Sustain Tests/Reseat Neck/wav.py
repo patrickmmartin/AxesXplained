@@ -84,7 +84,7 @@ def plot_series(x, y, props):
         plt.show()
     else:
         base = os.path.basename(filename)
-        plt.savefig("{0}-{1}.png".format(base, title), bbox_inches='tight')
+        plt.savefig("{0}-{1}.png".format(base, title), bbox_inches='tight', dpi=1200)
 
 
 def create_surface_data(freq_slices):
@@ -128,7 +128,7 @@ def plot_wireframe(X, Y, Z, props):
         plt.show()
     else:
         base = os.path.basename(filename)
-        plt.savefig("{0}-{1}.png".format(base, title), bbox_inches='tight')
+        plt.savefig("{0}-{1}.png".format(base, title), bbox_inches='tight', dpi=1200)
 
 
 def plot_surface(X, Y, Z):
