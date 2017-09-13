@@ -141,8 +141,10 @@ def plot_multiseries(data):
 
 
 def usage():
+    """ print args  usage: exit
+    """
     sys.exit(
-        "usage: {0} wav.py -signal -rms -logrms -fft -logfft -wireframe wav_file".format(sys.argv[0]))
+        "usage: {0} wav.py -signal -rms -logrms -fft -logfft -wireframe -nonInteractive wav_file".format(sys.argv[0]))
 
 
 import sys
@@ -152,23 +154,32 @@ if len(sys.argv) < 2:
     usage()
 
 try:
-    opts, args = getopt.getopt(sys.argv, "hsrRfFwn", [
-                               "signal", "RMS", "logRMS", "fft", "logfft", "wireframe", "noninteractive"])
+
+    opts, args = getopt.getopt(
+        sys.argv[1:],
+        'srRfFwn',
+        ["signal",
+         "RMS",
+         "logRMS",
+         "fft",
+         "logfft",
+         "wireframe",
+         "noninteractive"])
 
     options = {'signal': False, 'RMS': False, 'logRMS': False,
                'fft': False, 'logfft': False, 'wireframe': False,
                'noninteractive': False}
 
 except getopt.GetoptError:
-    print 'test.py -i <inputfile> -o <outputfile>'
-    sys.exit(2)
+    usage()
 
-print opts
+if len(args) != 1:
+    usage()
+
 for opt, arg in opts:
-    print opt, args
     if opt == '-h':
         usage()
-        sys.exit()
+
     elif opt in ("-s", "--signal"):
         options['signal'] = True
     elif opt in ("-r", "--RMS"):
@@ -184,10 +195,9 @@ for opt, arg in opts:
     elif opt in ("-n", "--noninteractive"):
         options['noninteractive'] = True
 
-print options
 
 # load the data and set up the correct time axis values
-fs, data = read_wav(args[2])
+fs, data = read_wav(args[0])
 length = len(data)
 time_seq = [1. * i / fs for i in range(0, length)]
 
