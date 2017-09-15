@@ -80,11 +80,12 @@ def plot_series(x, y, props):
 
         y_lim = props['y_limit']
         plt.ylim(y_lim[0], y_lim[1])
-    if not options['noninteractive']:
+    if not args.noninteractive:
         plt.show()
     else:
-        base = os.path.basename(filename)
-        plt.savefig("{0}-{1}.png".format(base, title), bbox_inches='tight', dpi=1200)
+        base = os.path.basename(args.filename)
+        plt.savefig("{0}-{1}.png".format(base, title),
+                    bbox_inches='tight', dpi=1200)
 
 
 def create_surface_data(freq_slices):
@@ -124,11 +125,12 @@ def plot_wireframe(X, Y, Z, props):
 
     ax.view_init(elev=65., azim=-90)
 
-    if not options['noninteractive']:
+    if not args.noninteractive:
         plt.show()
     else:
-        base = os.path.basename(filename)
-        plt.savefig("{0}-{1}.png".format(base, title), bbox_inches='tight', dpi=1200)
+        base = os.path.basename(args.filename)
+        plt.savefig("{0}-{1}.png".format(base, title),
+                    bbox_inches='tight', dpi=1200)
 
 
 def plot_surface(X, Y, Z):
@@ -160,59 +162,41 @@ def usage():
         "usage: {0} wav.py -signal -rms -logrms -fft -logfft -wireframe -nonInteractive wav_file".format(sys.argv[0]))
 
 
+# default splice size
+SPLICE_WINDOW = 65536
+
+# select the relevant portion for display
+FREQ_WINDOW = 4000  # about 3kHz
+
+# default RMS sample
+RMS_BIN = 1000
+
+
 import sys
-import getopt
 
-if len(sys.argv) < 2:
-    usage()
 
-try:
 
-    opts, args = getopt.getopt(
-        sys.argv[1:],
-        'srRfFwn',
-        ["signal",
-         "RMS",
-         "logRMS",
-         "fft",
-         "logfft",
-         "wireframe",
-         "noninteractive"])
+import argparse
 
-    options = {'signal': False, 'RMS': False, 'logRMS': False,
-               'fft': False, 'logfft': False, 'wireframe': False,
-               'noninteractive': False}
+parser = argparse.ArgumentParser()
+parser.add_argument('-s', '--signal', action='store_true')
+parser.add_argument('-r', '--rms', action='store_true')
+parser.add_argument('-R', '--logrms', action='store_true')
+parser.add_argument('-f', '--fft', action='store_true')
+parser.add_argument('-F', '--logfft', action='store_true')
+parser.add_argument('-w', '--wireframe', action='store_true')
+parser.add_argument('-n', '--noninteractive', action='store_true')
+parser.add_argument('-b', '--buffer', type=int, default = SPLICE_WINDOW)
+parser.add_argument('-x', '--freqextent', type=int, default=3000)
+parser.add_argument('filename')
+args = parser.parse_args()
 
-except getopt.GetoptError:
-    usage()
+args.freqbin = 4000
 
-if len(args) != 1:
-    usage()
-
-filename = args[0]
-
-for opt, arg in opts:
-    if opt == '-h':
-        usage()
-
-    elif opt in ("-s", "--signal"):
-        options['signal'] = True
-    elif opt in ("-r", "--RMS"):
-        options['RMS'] = True
-    elif opt in ("-R", "--logRM"):
-        options['logRMS'] = True
-    elif opt in ("-f", "--fft"):
-        options['fft'] = True
-    elif opt in ("-F", "--logFFT"):
-        options['logfft'] = True
-    elif opt in ("-w", "--wireframe"):
-        options['wireframe'] = True
-    elif opt in ("-n", "--noninteractive"):
-        options['noninteractive'] = True
-
+print(args)
 
 # load the data and set up the correct time axis values
-fs, data = read_wav(filename)
+fs, data = read_wav(args.filename)
 length = len(data)
 time_seq = [1. * i / fs for i in range(0, length)]
 
@@ -222,61 +206,54 @@ print "data length is {0} samples for {1} s at {2} Hz".format(len(data), len(dat
 signal_norm = normalise_wav_data(data.T)
 
 # plot simple normalised waveform
-if options['signal']:
+if args.signal:
     plot_series(time_seq, signal_norm, {
                 'title': 'recording', 'y_limit': [-1.1, 1.1]})
 
-
-RMS_BIN = 1000
-
 # sample an RMS series; generate time series
-rms_signal = generate_rms(signal_norm, 1000)
+rms_signal = generate_rms(signal_norm, RMS_BIN)
 
 rms_seq = [1. * (i + 0.5) / fs for i in range(0, len(rms_signal))]
 
 # plot RMS
-if options['RMS']:
+if args.rms:
     # samples quite granular
     plot_series(rms_seq, rms_signal, {'title': 'RMS'})
 
 # plot log RMS
-if options['logRMS']:
+if args.logrms:
     plot_series(rms_seq, np.log10(rms_signal), {'title': 'log RMS'})
 
-SPLICE_WINDOW = 65536
-
 # now break up the signal, generate the freq bins
-signal_seq = splice_data(signal_norm, SPLICE_WINDOW)
+signal_seq = splice_data(signal_norm, args.buffer)
 freq_seq = freq_bins(fs, len(signal_seq[0]))
 
 # calculate fourier transform on array list
 freq_hist = fft_data(signal_seq)
 
-# select the relevant portion for display
-FREQ_WINDOW = 4000  # about 3kHz
-freq_selection = select_real(freq_hist, FREQ_WINDOW)
+freq_selection = select_real(freq_hist, args.freqbin)
 
 # now build a surface data set
 freq_array, time_array, amp_array = create_surface_data(freq_selection)
 
 # freq_seq is SLICE_WINDOW, freq_selection is FFT_WINDOW
-if options['fft']:
-    plot_series(freq_seq[1:FREQ_WINDOW], amp_array[0],
+if args.fft:
+    plot_series(freq_seq[1:args.freqbin], amp_array[0],
                 {'title': 'frequency amplitudes'})
 
 amp_array_log = [np.log10(abs(datum)) for datum in amp_array]
 
 #for freq_slice in amp_array_log: plot_series(freq_slice)
-if options['logfft']:
-    plot_series(freq_seq[1:FREQ_WINDOW], amp_array_log[1],
+if args.logfft:
+    plot_series(freq_seq[1:args.freqbin], amp_array_log[1],
                 {'title': 'log frequency amplitudes'})
 
 # TODO(PMM) problem with wireplots is that the shape is "peaky",
 # so it's only by coincidence that any lines will go straight down the hill
 #plot_wireframe(freq_array, time_array, amp_array, {'title': 'frequency amplitudes'})
 
-if options['wireframe']:
-    plot_wireframe(freq_seq[1:FREQ_WINDOW], time_array, amp_array_log,
+if args.wireframe:
+    plot_wireframe(freq_seq[1:args.freqbin], time_array, amp_array,
                    {'title': 'frequency amplitudes'})
 
 #plot_surface(freq_array, time_array, amp_array_log)
