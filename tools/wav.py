@@ -246,14 +246,14 @@ freq_array, time_array, amp_array = create_surface_data(freq_selection)
 
 # freq_seq is SLICE_WINDOW, freq_selection is FFT_WINDOW
 if args.fft:
-    plot_series(freq_seq[1:args.freqbin], amp_array[0],
+    plot_series(freq_seq[1:args.freqbin], amp_array[1 if len(signal_seq) > 1 else 0],
                 {'title': 'frequency amplitudes'})
 
 amp_array_log = [np.log10(abs(datum)) for datum in amp_array]
 
 #for freq_slice in amp_array_log: plot_series(freq_slice)
 if args.logfft:
-    plot_series(freq_seq[1:args.freqbin], amp_array_log[1],
+    plot_series(freq_seq[1:args.freqbin], amp_array_log[1 if len(signal_seq) > 1 else 0],
                 {'title': 'log frequency amplitudes'})
 
 # TODO(PMM) problem with wireplots is that the shape is "peaky",
