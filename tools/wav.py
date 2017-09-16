@@ -169,7 +169,7 @@ SPLICE_WINDOW = 65536
 FREQ_WINDOW = 4000  # about 3kHz
 
 # default RMS sample
-RMS_BIN = 1000
+RMS_BIN = 10000
 
 
 import sys
