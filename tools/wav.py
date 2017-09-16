@@ -262,6 +262,6 @@ if args.logfft:
 
 if args.wireframe:
     plot_wireframe(freq_seq[1:args.freqbin], time_array, amp_array,
-                   {'title': 'frequency amplitudes'})
+                   {'title': 'frequency amplitudes over time'})
 
 #plot_surface(freq_array, time_array, amp_array_log)
