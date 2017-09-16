@@ -188,6 +188,7 @@ parser.add_argument('-w', '--wireframe', action='store_true')
 parser.add_argument('-n', '--noninteractive', action='store_true')
 parser.add_argument('-b', '--buffer', type=int, default = SPLICE_WINDOW)
 parser.add_argument('-x', '--freqextent', type=int, default=3000)
+parser.add_argument('-l', '--length', type=float, default=-1.)
 parser.add_argument('filename')
 args = parser.parse_args()
 
@@ -197,10 +198,17 @@ print(args)
 
 # load the data and set up the correct time axis values
 fs, data = read_wav(args.filename)
-length = len(data)
-time_seq = [1. * i / fs for i in range(0, length)]
 
 print "data length is {0} samples for {1} s at {2} Hz".format(len(data), len(data) / fs, fs)
+
+if args.length != -1:
+    data = data[0: fs * int(args.length)]
+    print "data length is now {0} samples for {1} s".format(len(data), len(data) / fs)
+
+length = len(data)
+    
+time_seq = [1. * i / fs for i in range(0, length)]
+
 
 # TODO(PMM) assuming 16-bit data (down-shifted from 24-bit recorded)
 signal_norm = normalise_wav_data(data.T)
